@@ -11,7 +11,7 @@ ARG JQ_URL
 ARG PARAMS_SHELL_URL
 ## xterm and ncurses for "tabs"
 ENV TERM=xterm
-RUN apk --update add curl openssl ncurses
+RUN apk --update add curl wget openssl ncurses
 RUN wget ${YQ_URL} -O /usr/bin/yq && chmod +x /usr/bin/yq
 RUN wget ${JQ_URL} -O /usr/bin/jq && chmod +x /usr/bin/jq
 RUN mkdir /scripts

@@ -60,17 +60,18 @@ fi
 ## EXPORT
 if [[ ${PARAM['export']} || ${PARAM['remove-all']} ]];then
     echo -e "export : ${PARAM['output']}"
-    > tmp_${PARAM['output']}
+    mkdir -p $(dirname ${PARAM['output']})
+    > /tmp/export.yml
 
     X_TOTAL_PAGE=$(curl -s --header "PRIVATE-TOKEN: ${PARAM['token']}" --head ${PARAM['url']}/api/v${PARAM['api-version']}/${TYPE}/${ID}/variables | awk -v FS=": " 'BEGIN{RS="\r\n";} /^x-total-pages/{print $2}')
 
     for p in $(seq $X_TOTAL_PAGE)
     do
-        curl -s --header "PRIVATE-TOKEN: ${PARAM['token']}" ${PARAM['url']}/api/v${PARAM['api-version']}/${TYPE}/${ID}/variables?page=${p} | yq eval -P >> tmp_${PARAM['output']}
+        curl -s --header "PRIVATE-TOKEN: ${PARAM['token']}" ${PARAM['url']}/api/v${PARAM['api-version']}/${TYPE}/${ID}/variables?page=${p} | yq eval -P >> /tmp/export.yml
     done
 
-    cat tmp_${PARAM['output']} | yq 'sort_by(.environment_scope)' > ${PARAM['output']}
-    rm tmp_${PARAM['output']}
+    cat /tmp/export.yml | yq 'sort_by(.environment_scope)' > ${PARAM['output']}
+    rm /tmp/export.yml
 fi
 
 ## REMOVE ALL VARIABLES
