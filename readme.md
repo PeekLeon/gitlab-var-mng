@@ -12,8 +12,8 @@ Options:
   --api-version=<value>       gitlab api version (default: 4)
   --group-id=<value>          gitlab group id [$GROUP_ID]
   --help                      show help (default: false)
-  --input=<value>             input file name [$INPUT]
-  --output=<value>            output file name [$OUTPUT]
+  --push=<value>              push variables from file name [$PUSH]
+  --pull=<value>              pull variables to file name [$PULL]
   --project-id=<value>        gitlab project id [$PROJECT_ID]
   --remove-all                Remove all variables
   --token=<value>             gitlab token [$TOKEN]
@@ -24,7 +24,7 @@ Options:
 
 Path `/data` contain the exports.
 
-> If you use the `--remove-all` option, an export is automatically created in this path with the name `export_var_<ID>.yml` or with the `--output` value.
+> If you use the `--remove-all` option, an export is automatically created in this path with the name `export_var_<ID>.yml` or with the `--pull` value.
 
 # How to use
 
@@ -32,21 +32,21 @@ Path `/data` contain the exports.
 docker run --env-file gitlab-prod.env -v /<your_volume>/:/data gitlab-var-mng --help
 ```
 
-input :
+push :
 ```shell
-docker run --env-file gitlab-prod.env -v /<your_volume>/:/data gitlab-var-mng --input=my_var.yml
+docker run --env-file gitlab-prod.env -v /<your_volume>/:/data gitlab-var-mng --push=my_var.yml
 ```
 
-output :
+pull :
 ```shell
-docker run --env-file gitlab-prod.env -v /<your_volume>/:/data gitlab-var-mng --output=my_var.yml
+docker run --env-file gitlab-prod.env -v /<your_volume>/:/data gitlab-var-mng --pull=my_var.yml
 ```
 
-input and output :
+push and pull :
 ```shell
-docker run --env-file gitlab-prod.env -v /<your_volume>/:/data gitlab-var-mng --output=my_var.yml --input=my_other_var.yml
+docker run --env-file gitlab-prod.env -v /<your_volume>/:/data gitlab-var-mng --pull=my_var.yml --push=my_other_var.yml
 ```
-> In the order : output, remove-all and input.
+> In the order : pull, remove-all and push.
 
 Example of env file :
 

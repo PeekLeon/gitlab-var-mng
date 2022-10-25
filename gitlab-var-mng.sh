@@ -10,8 +10,8 @@ if [[ ${PARAM['help']} ]];then
 \t --api-version=<value> \t gitlab api version (default: 4)
 \t --group-id=<value> \t gitlab group id [\$GROUP_ID]
 \t --help \t show help (default: false)
-\t --input=<value> \t input file name [\$INPUT]
-\t --output=<value> \t output file name [\$OUTPUT]
+\t --push=<value> \t push variables from file name [\$PUSH]
+\t --pull=<value> \t pull variables to file name [\$PULL]
 \t --project-id=<value> \t gitlab project id [\$PROJECT_ID]
 \t --remove-all \t Remove all variables
 \t --token=<value> \t gitlab token [\$TOKEN]
@@ -20,12 +20,12 @@ if [[ ${PARAM['help']} ]];then
     echo -e "\nAUTHOR: \n\t Written by Romain LEON romain.leon@gmail.fr \n"
     exit 0
 else
-    . /scripts/params-shell.sh --token=${TOKEN} --url=${URL} --project-id=${PROJECT_ID} --group-id=${GROUP_ID} --output=${OUTPUT} --input=${INPUT} --api-version=${API_VERSION}  "$@" mandatory=token,url type_int=project-id,group-id
+    . /scripts/params-shell.sh --token=${TOKEN} --url=${URL} --project-id=${PROJECT_ID} --group-id=${GROUP_ID} --pull=${PULL} --push=${PUSH} --api-version=${API_VERSION}  "$@" mandatory=token,url type_int=project-id,group-id
 fi
 
-## DEFAULT OUTPUT VALUE
-if [[ -z ${PARAM['output']} ]];then
-    PARAM['output']="export_var_${PARAM['project-id']}.yml"
+## DEFAULT PULL VALUE
+if [[ -z ${PARAM['pull']} ]];then
+    PARAM['pull']="export_var_${PARAM['project-id']}.yml"
 else
     PARAM['export']=1
 fi
@@ -59,8 +59,8 @@ fi
 
 ## EXPORT
 if [[ ${PARAM['export']} || ${PARAM['remove-all']} ]];then
-    echo -e "export : ${PARAM['output']}"
-    mkdir -p $(dirname ${PARAM['output']})
+    echo -e "Pull variables to ${PARAM['pull']} from ${PARAM['url']}"
+    mkdir -p $(dirname ${PARAM['pull']})
     > /tmp/export.yml
 
     X_TOTAL_PAGE=$(curl -s --header "PRIVATE-TOKEN: ${PARAM['token']}" --head ${PARAM['url']}/api/v${PARAM['api-version']}/${TYPE}/${ID}/variables | awk -v FS=": " 'BEGIN{RS="\r\n";} /^x-total-pages/{print $2}')
@@ -70,7 +70,7 @@ if [[ ${PARAM['export']} || ${PARAM['remove-all']} ]];then
         curl -s --header "PRIVATE-TOKEN: ${PARAM['token']}" ${PARAM['url']}/api/v${PARAM['api-version']}/${TYPE}/${ID}/variables?page=${p} | yq eval -P >> /tmp/export.yml
     done
 
-    cat /tmp/export.yml | yq 'sort_by(.environment_scope)' > ${PARAM['output']}
+    cat /tmp/export.yml | yq 'sort_by(.environment_scope)' > ${PARAM['pull']}
     rm /tmp/export.yml
 fi
 
@@ -78,7 +78,7 @@ fi
 if [[ ${PARAM['remove-all']} ]];then
     echo -e "remove all : \n"
     TMP_JSON=/tmp/var_${ID}_rm.json
-    cat ${PARAM['output']} | yq eval -o=json > ${TMP_JSON}
+    cat ${PARAM['pull']} | yq eval -o=json > ${TMP_JSON}
 
     jq -c '.[]' ${TMP_JSON} | while read i; do
         echo -e "\n------------------------------------------------------------------------------"
@@ -95,11 +95,11 @@ if [[ ${PARAM['remove-all']} ]];then
 fi
 
 ## IMPORT
-if [[ ${PARAM['input']} ]];then
-    echo -e "import : ${PARAM['input']} \n"
+if [[ ${PARAM['push']} ]];then
+    echo -e "Push variables from ${PARAM['push']} to ${PARAM['url']} \n"
     VAR_ALREADY_EXIST_STR="has already been taken"
     TMP_JSON="/tmp/var_${ID}.json"
-    cat ${PARAM['input']} | yq eval -o=json > ${TMP_JSON}
+    cat ${PARAM['push']} | yq eval -o=json > ${TMP_JSON}
 
     jq -c '.[]' ${TMP_JSON} | while read i; do
         post_var=$(curl -s --request POST ${PARAM['url']}/api/v${PARAM['api-version']}/${TYPE}/${ID}/variables \
